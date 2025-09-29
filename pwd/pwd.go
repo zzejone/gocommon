@@ -1,3 +1,4 @@
+// Package pwd
 package pwd
 
 import (
@@ -11,46 +12,99 @@ import (
 	"golang.org/x/crypto/argon2"
 )
 
-// ------------------- 参数 -------------------
-// 下面的参数是常用的安全配置，实际项目可根据硬件性能调节
-const (
-	argonTime    uint32 = 2         // 迭代次数
-	argonMemory  uint32 = 64 * 1024 // 64 MiB
-	argonThreads uint8  = 4         // 并行度
-	argonKeyLen  uint32 = 32        // 输出长度（bytes）
-	saltLen      int    = 16        // 128‑bit 随机盐
-)
+type PwdInterface interface {
+	HashPassword(ipt string) (string, error)
+	VerifyPassword(password, encoded string) (bool, error)
+}
 
-// ------------------- 生成随机盐 -------------------
-func generateSalt() ([]byte, error) {
-	salt := make([]byte, saltLen)
+type PwdStruct struct {
+	argonTime    uint32 // 迭代次数
+	argonMemory  uint32 // 64 MiB
+	argonThreads uint8  // 并行度
+	argonKeyLen  uint32 // 输出长度（bytes）
+	saltLen      int    // 128‑bit 随机盐
+}
+
+type Option func(*PwdStruct)
+
+func NewPwdStruct(opts ...Option) *PwdStruct {
+	inst := new(PwdStruct)
+	inst.argonTime = 2
+	inst.argonThreads = 4
+	inst.argonMemory = 64 * 1024
+	inst.argonKeyLen = 32
+	inst.saltLen = 16
+
+	for _, opt := range opts {
+		opt(inst)
+	}
+
+	return inst
+}
+
+// SetArgonTime 设置迭代次数
+func SetArgonTime(ipt uint32) Option {
+	return func(ps *PwdStruct) {
+		ps.argonTime = ipt
+	}
+}
+
+// SetArgonMemory 设置内存
+func SetArgonMemory(ipt uint32) Option {
+	return func(ps *PwdStruct) {
+		ps.argonMemory = ipt
+	}
+}
+
+// SetArgonThreads 设置并行度
+func SetArgonThreads(ipt uint8) Option {
+	return func(ps *PwdStruct) {
+		ps.argonThreads = ipt
+	}
+}
+
+// SetArgonKeyLen 设置输出长度
+func SetArgonKeyLen(ipt uint32) Option {
+	return func(ps *PwdStruct) {
+		ps.argonKeyLen = ipt
+	}
+}
+
+// SetArgonSaltLen 设置随机盐长度
+func SetArgonSaltLen(ipt int) Option {
+	return func(ps *PwdStruct) {
+		ps.saltLen = ipt
+	}
+}
+
+func (p *PwdStruct) generateSalt() ([]byte, error) {
+	salt := make([]byte, p.saltLen)
 	_, err := rand.Read(salt)
 	return salt, err
 }
 
 // ------------------- 哈希生成 -------------------
-func HashPassword(password string) (string, error) {
-	salt, err := generateSalt()
+func (p *PwdStruct) HashPassword(password string) (string, error) {
+	salt, err := p.generateSalt()
 	if err != nil {
 		return "", err
 	}
 
 	// 计算 Argon2id 哈希
-	hash := argon2.IDKey([]byte(password), salt, argonTime, argonMemory, argonThreads, argonKeyLen)
+	hash := argon2.IDKey([]byte(password), salt, p.argonTime, p.argonMemory, p.argonThreads, p.argonKeyLen)
 
 	// 使用 URL‑safe Base64（不带 padding）便于存库
 	b64Salt := base64.RawStdEncoding.EncodeToString(salt)
 	b64Hash := base64.RawStdEncoding.EncodeToString(hash)
 
 	// 统一的编码格式
-	encoded := fmt.Sprintf("$argon2id$v=19$m=%d,t=%d,p=%d$%s$%s",
-		argonMemory, argonTime, argonThreads, b64Salt, b64Hash)
+	encoded := fmt.Sprintf("$argon2id$v=19$m=%d,t=%d,p=%d$%s$%s", p.argonMemory, p.argonTime, p.argonThreads, b64Salt, b64Hash)
 
 	return encoded, nil
 }
 
 // ------------------- 哈希校验 -------------------
-func VerifyPassword(password, encoded string) (bool, error) {
+func (p *PwdStruct) VerifyPassword(password, encoded string) (bool, error) {
 	// 1. 按 $ 分割
 	parts := strings.Split(encoded, "$")
 	if len(parts) != 6 {

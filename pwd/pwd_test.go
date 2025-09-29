@@ -24,9 +24,10 @@ func TestHashPassword(t *testing.T) {
 			wantErr: false,
 		},
 	}
+	p := NewPwdStruct()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := HashPassword(tt.args.password)
+			_, err := p.HashPassword(tt.args.password)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("HashPassword() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -40,8 +41,9 @@ func TestVerifyPassword(t *testing.T) {
 		password string
 		encoded  string
 	}
+	p := NewPwdStruct()
 	mima := "abc12333"
-	encodedPwd, err := HashPassword(mima)
+	encodedPwd, err := p.HashPassword(mima)
 	if err != nil {
 		t.Errorf("对比密码准备失败：%v", err)
 	}
@@ -72,7 +74,7 @@ func TestVerifyPassword(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := VerifyPassword(tt.args.password, tt.args.encoded)
+			got, err := p.VerifyPassword(tt.args.password, tt.args.encoded)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("VerifyPassword() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -85,13 +87,15 @@ func TestVerifyPassword(t *testing.T) {
 }
 
 func BenchmarkHashPassword(b *testing.B) {
+	p := NewPwdStruct()
 	for i := 0; i < b.N; i++ {
-		HashPassword("123456")
+		p.HashPassword("123456")
 	}
 }
 
 func BenchmarkVerifyPassword(b *testing.B) {
+	p := NewPwdStruct()
 	for i := 0; i < b.N; i++ {
-		VerifyPassword("pwd", "encodecpassword")
+		p.VerifyPassword("pwd", "encodecpassword")
 	}
 }
