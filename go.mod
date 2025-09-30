@@ -5,6 +5,7 @@ go 1.23.10
 require (
 	github.com/gin-gonic/gin v1.10.1
 	github.com/go-playground/validator/v10 v10.27.0
+	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/uuid v1.6.0
 	github.com/zeromicro/go-zero v1.9.0
 	golang.org/x/crypto v0.39.0
