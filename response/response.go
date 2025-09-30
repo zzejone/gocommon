@@ -30,6 +30,10 @@ func JSON(w http.ResponseWriter, data any, err error) {
 	}
 }
 
+func OkJSON(w http.ResponseWriter, data Body) {
+	httpx.OkJson(w, data)
+}
+
 // extractErrorMessage 从错误中提取友好的错误信息
 func extractErrorMessage(err error) string {
 	// 尝试转换为gRPC状态错误
