@@ -10,7 +10,7 @@ import (
 
 // CustomClaims 自定义Claims结构，使用map存储自定义数据
 type CustomClaims struct {
-	Data map[string]any `json:"data"` // 存储自定义数据
+	Data map[string]string `json:"data"` // 存储自定义数据
 	jwt.RegisteredClaims
 }
 
@@ -69,7 +69,7 @@ func SetSignMethod(ipt jwt.SigningMethod) Option {
 }
 
 // GenerateToken 生成JWT Token - 支持map传入自定义数据
-func (jm *JWTManager) GenerateToken(data map[string]any) (string, error) {
+func (jm *JWTManager) GenerateToken(data map[string]string) (string, error) {
 	// 设置Claims
 	claims := CustomClaims{
 		Data: data,
@@ -89,7 +89,7 @@ func (jm *JWTManager) GenerateToken(data map[string]any) (string, error) {
 }
 
 // ParseToken 解析JWT Token
-func (jm *JWTManager) ParseToken(tokenString string) (map[string]any, error) {
+func (jm *JWTManager) ParseToken(tokenString string) (map[string]string, error) {
 	// 解析Token
 	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (any, error) {
 		// 验证签名方法是否匹配
